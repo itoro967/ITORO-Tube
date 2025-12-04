@@ -16,7 +16,7 @@ class VideoController extends Controller
         $search = $request->input('word');
         $videos = Video::with('user')->when($search, fn($query) =>
             $query->where('title', 'like', "%{$search}%")
-        )->get();
+        )->latest()->get();
         return inertia('index', ['videos' => $videos]);
     }
 
@@ -35,7 +35,8 @@ class VideoController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|max:255',
-            'video_file' => 'required|file|mimes:mp4,avi,mov|max:1024000', // 最大1GB
+            // 'video_file' => 'required|file|mimes:mp4,avi,mov|max:1024000', // 最大1GB
+            'video_file' => 'required|file|max:1024000', // 最大1GB
             'thumbnail_file' => 'nullable|file|mimes:jpg,jpeg,png|max:20480', // 最大20MB
         ]);
 
@@ -57,7 +58,8 @@ class VideoController extends Controller
         ]);
 
         if ($request->hasFile('thumbnail_file')) {
-            $path_to_thumbnail = $request->file('thumbnail_file')->storeAs('thumbnails', basename($path_to_thumbnail), 'public');
+            $path_to_thumbnail = $request->file('thumbnail_file')->store('thumbnails', 'public') ;
+            $video->update(['thumbnail_path' => $path_to_thumbnail]);
         } else {
             $chain->append(new VideoThumbnail($video));
         }
@@ -69,7 +71,7 @@ class VideoController extends Controller
 
     public function manage()
     {
-        $videos = Auth::user()->videos()->with('user')->get();
+        $videos = Auth::user()->videos()->with('user')->latest()->get();
         return inertia('video/manage', ['videos' => $videos]);
     }
 

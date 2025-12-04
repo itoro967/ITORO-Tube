@@ -3,7 +3,7 @@ import { Video } from '@/types/video'
 
 export function VideoCard({ video,url }: { video: Video,url:string }) {
     return (
-        <Link key={video.id} className="cursor-pointer rounded-lg w-1/3 hover:outline" href={url}>
+        <Link key={video.id} className="cursor-pointer rounded-lg md:w-[30%] w-full hover:outline" href={url}>
             {(video.encoded == 100)&&
             <img src={`/storage/${video.thumbnail_path}`} className="aspect-video w-full" alt={video.title} />
             }

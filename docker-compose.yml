@@ -14,15 +14,15 @@ services:
             - "5173:5173"
         volumes:
             - ./src/:/var/www/
-    mysql:
-        image: mysql:9.0.1
-        environment:
-            MYSQL_ROOT_PASSWORD: root
-            MYSQL_DATABASE: laravel_db
-            MYSQL_USER: laravel_user
-            MYSQL_PASSWORD: laravel_pass
-        volumes:
-            - ./docker/mysql/data:/var/lib/mysql
-            - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
-        ports:
-            - "3306:3306"
+    # mysql:
+    #     image: mysql:9.0.1
+    #     environment:
+    #         MYSQL_ROOT_PASSWORD: root
+    #         MYSQL_DATABASE: laravel_db
+    #         MYSQL_USER: laravel_user
+    #         MYSQL_PASSWORD: laravel_pass
+    #     volumes:
+    #         - ./docker/mysql/data:/var/lib/mysql
+    #         - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+    #     ports:
+    #         - "3306:3306"

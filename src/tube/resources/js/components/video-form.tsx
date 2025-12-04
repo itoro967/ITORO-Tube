@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Video } from '@/types/video';
 import { Link } from '@inertiajs/react';
 
+import { Spinner } from "@/components/ui/spinner"
+
 export  function VideoForm({isEdit = false,video=null,action}: {isEdit?: boolean, video:Video|null, action:string}) {
     const { data, setData, post, errors } = useForm({
         video_file: null,
@@ -73,9 +75,9 @@ export  function VideoForm({isEdit = false,video=null,action}: {isEdit?: boolean
     };
 
     return (
-        <form onSubmit={submit} className='w-1/2 mx-auto'>
+        <form onSubmit={submit} className='w-[90%] md:w-1/2 mx-auto'>
             <FieldGroup>
-                <div className='flex gap-2'>
+                <div className='flex flex-col md:flex-row gap-2'>
                     <Field>
                         <FieldLabel className='sr-only'>動画</FieldLabel>
                         <div className='aspect-video bg-muted/100 flex relative' onDrop={onDropVideo} onDragOver={onDragOver}>

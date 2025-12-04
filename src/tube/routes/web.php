@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\VideoController;
 
+Route::prefix('/b7c03d75-3926-a1ba-fda5-3b0ad708dca5')->group(function () {
+
 Route::get('/top', [VideoController::class, 'index'])->name('dashboard');
 Route::get('/login', [AuthController::class, 'login'])->name('login');
 
@@ -30,4 +32,6 @@ Route::prefix('video')->name('video.')->group(function () {
 Route::prefix('user')->name('user.')->middleware('auth')->group(function () {
     Route::get('/edit', [\App\Http\Controllers\UserController::class, 'edit'])->name('edit');
     Route::post('/edit', [\App\Http\Controllers\UserController::class, 'update'])->name('update');
+});
+
 });
