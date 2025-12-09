@@ -3,6 +3,7 @@ export interface Video {
     title: string;
     video_path: string;
     thumbnail_path: string;
+    thumbnail_file: string;
     encoded: number;
     user: {
         id: number;

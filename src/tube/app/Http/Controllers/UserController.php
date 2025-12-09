@@ -1,13 +1,16 @@
 <?php
 
 namespace App\Http\Controllers;
+
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
     public function edit()
     {
-        return inertia('user/edit');
+        $user = Auth::user();
+        return inertia('user/edit', ['user' => $user]);
     }
     public function update(Request $request)
     {
@@ -23,6 +26,6 @@ class UserController extends Controller
         }
         $user->save();
 
-        return redirect()->route('user.edit')->with('success', 'アカウント情報を更新しました。');
+        return redirect()->route('dashboard')->with('success', 'アカウント情報を更新しました。');
     }
 }

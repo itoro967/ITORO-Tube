@@ -10,11 +10,10 @@ import { cn } from "@/lib/utils"
 import { Button } from '@/components/ui/button';
 import { Video } from '@/types/video';
 import { Link } from '@inertiajs/react';
-
-import { Spinner } from "@/components/ui/spinner"
+import { UploadProgress } from '@/components/upload-progress';
 
 export  function VideoForm({isEdit = false,video=null,action}: {isEdit?: boolean, video:Video|null, action:string}) {
-    const { data, setData, post, errors } = useForm({
+    const { data, setData, post, errors, progress } = useForm({
         video_file: null,
         thumbnail_file: video?.thumbnail_file || null,
         title: video?.title || '',
@@ -82,7 +81,7 @@ export  function VideoForm({isEdit = false,video=null,action}: {isEdit?: boolean
                         <FieldLabel className='sr-only'>動画</FieldLabel>
                         <div className='aspect-video bg-muted/100 flex relative' onDrop={onDropVideo} onDragOver={onDragOver}>
                             <video id='video-preview' className={cn('absolute w-full h-full', { hidden: !data.video_file && !isEdit })} controls
-                                src={isEdit ? `/storage/${video.video_path}` : undefined}
+                                src={isEdit ? `/storage/${video?.video_path}` : undefined}
                             />
                             <div className='m-auto'>
                                 動画を選択
@@ -97,7 +96,7 @@ export  function VideoForm({isEdit = false,video=null,action}: {isEdit?: boolean
                         <FieldLabel className='sr-only'>サムネイル</FieldLabel>
                         <div className='aspect-video bg-muted/100 flex relative' onDrop={onDropThumbnail} onDragOver={onDragOver}>
                             <img id='thumbnail-preview' className={cn('absolute w-full h-full ', { hidden: !data.thumbnail_file && !isEdit })}
-                                src={isEdit ? `/storage/${video.thumbnail_path}` : undefined} />
+                                src={isEdit ? `/storage/${video?.thumbnail_path}` : undefined} />
                             <div className='m-auto'>
                                 サムネイルを選択(任意)
                                 <FaPhotoVideo className='m-auto size-20' />
@@ -115,8 +114,9 @@ export  function VideoForm({isEdit = false,video=null,action}: {isEdit?: boolean
                 <Button type="submit" className='mt-5 cursor-pointer'>
                     {isEdit ? '更新' : 'アップロード'}
                 </Button>
-                {isEdit && <Button asChild className='bg-red-500 text-white hover:bg-red-600 cursor-pointer'><Link href={route('video.delete', video.id)} method="post">削除</Link></Button>}
+                {isEdit && <Button asChild className='bg-red-500 text-white hover:bg-red-600 cursor-pointer'><Link href={route('video.delete', video?.id)} method="post">削除</Link></Button>}
             </FieldGroup>
+            {progress && <UploadProgress progress={progress.percentage} />}
         </form>
     );
 }

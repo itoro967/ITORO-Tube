@@ -16,7 +16,7 @@ export function VideoCard({ video,url }: { video: Video,url:string }) {
             </div>
             }
             <div className="bg-muted/50 rounded-b-lg p-2">
-                <div className="text-lg font-semibold truncate">{video.title}</div>
+                <div className="text-lg font-semibold line-clamp-2">{video.title}</div>
                 <div className="text-md text-gray-600 flex place-content-between"><span>投稿者: {video.user.name}</span><span>{new Date(video.created_at).toLocaleString()}</span></div>
             </div>
         </Link>

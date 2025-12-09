@@ -15,6 +15,8 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
 import { useForm } from '@inertiajs/react';
 
 export function LoginForm({
@@ -25,11 +27,12 @@ export function LoginForm({
   const { data, setData, post, errors } = useForm({
     name: '',
     password: '',
+    remember_me: false,
   });
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    post(route('auth.authenticate'), { data });
+    post(route('auth.authenticate'));
   };
 
   return (
@@ -67,6 +70,10 @@ export function LoginForm({
                   {errors.password && <span className="text-red-500">{errors.password}</span>}
                 </FieldDescription>
               </Field>
+              <div className="flex items-center gap-3">
+                <Checkbox id="remember_me" checked={data.remember_me} onCheckedChange={state => typeof state === "boolean" && setData('remember_me', state)} />
+                <Label htmlFor="remember_me">ログイン状態を保持する</Label>
+              </div>
               <Field>
                 <Button type="submit">Login</Button>
                 <FieldDescription className="text-center">

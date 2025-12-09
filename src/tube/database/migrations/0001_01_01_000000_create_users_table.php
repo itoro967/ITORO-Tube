@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('password');
+            $table->rememberToken();
             $table->boolean('is_active')->default(false);
             $table->timestamps();
         });
