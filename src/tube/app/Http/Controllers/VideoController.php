@@ -23,7 +23,8 @@ class VideoController extends Controller
     public function show($id)
     {
         $video = Video::with('user')->findOrFail($id);
-        return inertia('video/show', ['video' => $video]);
+        $videos = Video::with('user')->latest()->get();
+        return inertia('video/show', ['video' => $video, 'videos' => $videos]);
     }
 
     public function upload()

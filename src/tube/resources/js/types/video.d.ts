@@ -8,6 +8,7 @@ export interface Video {
     user: {
         id: number;
         name: string;
+        profile_image_path: string;
     };
     created_at: string;
 }

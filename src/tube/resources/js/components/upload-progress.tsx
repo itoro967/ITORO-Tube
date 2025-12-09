@@ -1,9 +1,7 @@
-import { Button } from "@/components/ui/button"
 import {
   Item,
   ItemActions,
   ItemContent,
-  ItemDescription,
   ItemFooter,
   ItemMedia,
   ItemTitle,
