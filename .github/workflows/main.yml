@@ -11,15 +11,11 @@ jobs:
       - name: SSH-SCP-SSH Pipeline
         uses: kangketikonlen/ssh-pipeline@v0.0.3
         with:
-          # Remote server hostname or IP address.
           host: ${{ secrets.SSH_HOST }}
-          # SSH port on the remote server.
           port: ${{ secrets.SSH_PORT }}
-          # SSH username for the remote server.
           user: ${{ secrets.SSH_USER }}
-          # SSH private key to authenticate. (Use GitHub secrets!)
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          # Multiline block of commands to run before the SCP transfer.
+          known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
           first_ssh: |
             cd ITORO-Tube
             git pull
