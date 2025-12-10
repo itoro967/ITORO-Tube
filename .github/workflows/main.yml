@@ -19,3 +19,11 @@ jobs:
           first_ssh: |
             cd ITORO-Tube
             git pull
+            docker compose exec php sh -c "cd tube && composer install"
+            docker compose exec php sh -c "cd tube && npm install"
+            docker compose exec php sh -c "cd tube && php artisan migrate"
+            docker compose exec php sh -c "cd tube && npm run build"
+            docker compose exec php sh -c "cd tube && php artisan cache:clear"
+            docker compose exec php sh -c "cd tube && php artisan config:cache"
+            docker compose exec php sh -c "cd tube && php artisan route:cache"
+
