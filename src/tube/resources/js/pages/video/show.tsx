@@ -2,6 +2,7 @@ import MainLayout from '@/layouts/mainLayout'
 import { Video } from '@/types/video'
 import { VideoCard } from '@/components/video-card'
 import { useEffect, useRef } from 'react'
+import { Head } from '@inertiajs/react'
 export default function Page({ video, videos }: { video: Video, videos: Video[] }) {
   // jsで自動再生させる
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -11,6 +12,12 @@ export default function Page({ video, videos }: { video: Video, videos: Video[] 
 
   return (
     <MainLayout>
+      <Head>
+        <title>{video.title}</title>
+        <meta property="og:title" content={video.title} />
+        <meta property="og:image" content={`${window.location.origin}/storage/${video.thumbnail_path}`} />
+        <meta property="og:description" content={`投稿者: ${video.user.name}`} />
+      </Head>
       <div className="h-full p-4">
         <video
           key={video.id}
