@@ -24,6 +24,10 @@ class VideoController extends Controller
     {
         $video = Video::with('user')->findOrFail($id);
         $videos = Video::with('user')->latest()->get();
+        $isCrawl = preg_match('/(Line|Twitterbot|Slackbot|Discordbot)/i', request()->header('User-Agent'));
+        if ($isCrawl) {
+            return view('showVideoOGP', ['video' => $video]);
+        }
         return inertia('video/show', ['video' => $video, 'videos' => $videos]);
     }
 

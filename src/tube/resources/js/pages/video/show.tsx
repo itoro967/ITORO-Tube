@@ -14,9 +14,6 @@ export default function Page({ video, videos }: { video: Video, videos: Video[] 
     <MainLayout>
       <Head>
         <title>{video.title}</title>
-        <meta property="og:title" content={video.title} />
-        <meta property="og:image" content={`${window.location.origin}/storage/${video.thumbnail_path}`} />
-        <meta property="og:description" content={`投稿者: ${video.user.name}`} />
       </Head>
       <div className="h-full p-4">
         <video
