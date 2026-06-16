@@ -41,7 +41,7 @@ class VideoController extends Controller
         $validated = $request->validate([
             'title' => 'required|max:255',
             // 'video_file' => 'required|file|mimes:mp4,avi,mov|max:1024000', // 最大1GB
-            'video_file' => 'required|file|max:1024000', // 最大1GB
+            'video_file' => 'required|file|max:10240000', // 最大10GB
             'thumbnail_file' => 'nullable|file|mimes:jpg,jpeg,png|max:20480', // 最大20MB
         ]);
 
