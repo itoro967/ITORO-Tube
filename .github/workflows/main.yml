@@ -25,7 +25,8 @@ jobs:
           known_hosts: ${{ steps.keyscan.outputs.value }}
           first_ssh: |
             cd ITORO-Tube
-            git pull
+            git fetch origin main
+            git reset --hard origin/main
             docker compose exec php sh -c "cd tube && composer install"
             docker compose exec php sh -c "cd tube && npm install"
             docker compose exec php sh -c "cd tube && php artisan migrate"
