@@ -8,6 +8,13 @@ jobs:
     runs-on: ubuntu-latest
     name: deploy on starting
     steps:
+      # DDNS でホスト名が変わっても壊れないよう、接続先の鍵を毎回取得する
+      - name: Scan SSH host key
+        id: keyscan
+        run: |
+          echo "value<<KEYSCAN_EOF" >> "$GITHUB_OUTPUT"
+          ssh-keyscan -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_HOST }}" >> "$GITHUB_OUTPUT"
+          echo "KEYSCAN_EOF" >> "$GITHUB_OUTPUT"
       - name: SSH-SCP-SSH Pipeline
         uses: kangketikonlen/ssh-pipeline@v0.0.3
         with:
@@ -15,7 +22,7 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           user: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
+          known_hosts: ${{ steps.keyscan.outputs.value }}
           first_ssh: |
             cd ITORO-Tube
             git pull
