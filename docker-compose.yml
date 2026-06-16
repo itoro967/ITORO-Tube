@@ -20,6 +20,16 @@ services:
             - "5173:5173"
         volumes:
             - ./src/:/var/www/
+        restart: unless-stopped
+    queue:
+        build: ./docker/php
+        volumes:
+            - ./src/:/var/www/
+        command: >
+            /bin/sh -c "cd tube && php artisan queue:work --tries=1 --timeout=0 --sleep=3"
+        depends_on:
+            - php
+        restart: unless-stopped
     certbot:
         image: certbot/certbot
         volumes:
