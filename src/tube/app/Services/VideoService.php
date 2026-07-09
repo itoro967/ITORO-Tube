@@ -33,22 +33,26 @@ class VideoService
 
     static function encode($inputFile, $outputFile, $progressCallback = null){
         try {
-            // 入力動画のフレーム数を取得する
-            $totalFrame = 0;
-            $ffprobeCommand = "ffprobe -v error -select_streams v:0 -count_frames -show_entries stream=nb_read_frames -of default=nokey=1:noprint_wrappers=1 " . escapeshellarg($inputFile);
+            // 入力動画の総再生時間(秒)を取得する（全フレームをデコードせず高速に取得）
+            $duration = 0.0;
+            $ffprobeCommand = "ffprobe -v error -show_entries format=duration -of default=nokey=1:noprint_wrappers=1 " . escapeshellarg($inputFile);
             $output = [];
             exec($ffprobeCommand, $output, $returnVar);
-            if ($returnVar === 0 && isset($output[0])) {
-                $totalFrame = (int)$output[0];
+            if ($returnVar === 0 && isset($output[0]) && is_numeric(trim($output[0]))) {
+                $duration = (float) trim($output[0]);
             } else {
-                throw new \Exception("動画の総フレーム数の取得に失敗しました。");
+                // 再生時間が取れないと進捗を算出できない（0%のまま完了まで進む）。握りつぶさず記録する。
+                Log::warning("動画の再生時間を取得できませんでした。進捗は表示されません。Input: {$inputFile}");
             }
 
             // FFmpegを使用して動画をエンコード
-            $command = "ffmpeg -i {$inputFile} -vcodec libx264 -crf 23 {$outputFile}". " -progress pipe:2";
+            // -movflags +faststart で moov アトムを先頭に移動し、Web ストリーミング時の即時再生・シークを可能にする
+            $command = "ffmpeg -y -i " . escapeshellarg($inputFile)
+                . " -c:v libx264 -crf 23 -c:a aac -movflags +faststart -progress pipe:2 "
+                . escapeshellarg($outputFile);
             // プロセスを開始
+            // 標準出力(pipe:1)は読み取らないためパイプを開かない（未読パイプによる fd リーク・デッドロックを回避）。
             $descriptors = [
-                1 => ['pipe', 'w'], // 標準出力
                 2 => ['pipe', 'w'], // 標準エラー出力
             ];
             $process = proc_open($command, $descriptors, $pipes);
@@ -64,21 +68,22 @@ class VideoService
                 if ($line === false) {
                     break;
                 }
-                // FFmpegの進捗情報を解析
-                if (preg_match('/frame=\s*(\d+)/', $line, $matches)) {
-                    if ($progressCallback) {
-                        $progress = (int)($matches[1] / $totalFrame * 100);
-                        $progressCallback($progress);
-                    }
+                // FFmpegの進捗情報(out_time_us)を解析し、再生時間に対する割合で進捗を算出する
+                if ($duration > 0 && $progressCallback && preg_match('/out_time_us=(\d+)/', $line, $matches)) {
+                    $progress = (int) min(99, ($matches[1] / 1_000_000) / $duration * 100);
+                    $progressCallback($progress);
                 }
-            }
-            if ($progressCallback) {
-                $progress = 100;
-                $progressCallback($progress);
             }
             // プロセスを閉じる
             fclose($stderr);
-            proc_close($process);
+            $exitCode = proc_close($process);
+            if ($exitCode !== 0) {
+                throw new \Exception("FFmpegエンコードが異常終了しました。終了コード: {$exitCode}");
+            }
+            // 正常終了を確認できてから完了(100%)を通知する（失敗を完了扱いしない）
+            if ($progressCallback) {
+                $progressCallback(100);
+            }
 
         } catch (\Exception $e) {
             Log::error("動画エンコード中にエラーが発生しました: " . $e->getMessage());

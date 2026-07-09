@@ -12,6 +12,18 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
+    protected static function booted(): void
+    {
+        // ユーザー削除時、DB の外部キー cascade は Eloquent の deleting を発火させず
+        // 動画ファイルが孤立するため、先に各 Video をモデル経由で削除してファイルも消す。
+        // lazyById() は id 範囲で再クエリするため、反復中に行を削除しても取りこぼさず（cursor と違い
+        // ストリーミング結果を壊さない）、メモリも節約できる。ファイル削除は元に戻せないため、
+        // 敢えてトランザクションで囲まない（ロールバックすると行だけ復活しファイルが消えた不整合になる）。
+        static::deleting(function (User $user) {
+            $user->videos()->lazyById()->each(fn(Video $video) => $video->delete());
+        });
+    }
+
     /**
      * The attributes that are mass assignable.
      *

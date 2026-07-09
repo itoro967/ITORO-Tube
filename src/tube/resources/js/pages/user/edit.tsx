@@ -40,7 +40,7 @@ export default function Page({ user }: { user:Auth }) {
   return (
     <MainLayout title="アカウント管理">
       <Button asChild variant="default" className="ml-4 w-20 -mt-12 ml-auto mr-5">
-        <Link href={route('auth.logout')}>Logout</Link>
+        <Link href={route('auth.logout')} method="post" as="button">Logout</Link>
       </Button>
       <form onSubmit={submit}>
       <FieldGroup className='w-1/2 mx-auto mt-10'>
