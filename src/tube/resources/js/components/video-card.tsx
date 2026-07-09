@@ -1,13 +1,22 @@
 import { Link } from '@inertiajs/react'
+import { useState } from 'react'
 import { Video } from '@/types/video'
 
 export function VideoCard({ video,url }: { video: Video,url:string }) {
+    // 生成前(一時的な404)や失敗(null)でサムネが無いときはプレースホルダにフォールバックする
+    const [thumbFailed, setThumbFailed] = useState(false)
     return (
-        <Link key={video.id} className="cursor-pointer rounded-lg md:w-[30%] w-full hover:outline h-fit" href={url}>
-            {(video.encoded == 100)&&
-            <img src={`/storage/${video.thumbnail_path}`} className="aspect-video w-full rounded-t-lg" alt={video.title} />
+        <Link className="cursor-pointer rounded-lg md:w-[30%] w-full hover:outline h-fit" href={url}>
+            {(video.encoded === 100) && (video.thumbnail_path && !thumbFailed
+                ? <img src={`/storage/${video.thumbnail_path}`} onError={() => setThumbFailed(true)} className="aspect-video w-full rounded-t-lg" alt={video.title} />
+                : <div className="flex items-center justify-center rounded-t-lg w-full bg-muted/80 aspect-video text-gray-500">サムネイルなし</div>
+            )}
+            {(video.encoded < 0)&&
+            <div className="flex items-center justify-center rounded-t-lg w-full bg-muted/80 aspect-video text-red-500">
+                エンコードに失敗しました
+            </div>
             }
-            {(video.encoded != 100)&&
+            {(video.encoded >= 0 && video.encoded !== 100)&&
             <div className="flex flex-col justify-between rounded-t-lg w-full bg-muted/80 aspect-video hover:outline">
                 <div className='p-4'>エンコード処理中...</div>
                 <div className="m-3 h-1 bg-gray-300 rounded">

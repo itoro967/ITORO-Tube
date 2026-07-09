@@ -26,7 +26,7 @@ services:
         volumes:
             - ./src/:/var/www/
         command: >
-            /bin/sh -c "cd tube && php artisan queue:work --tries=1 --timeout=0 --sleep=3"
+            /bin/sh -c "cd tube && php artisan queue:work --tries=3 --backoff=30 --timeout=0 --sleep=3"
         depends_on:
             - php
         restart: unless-stopped
