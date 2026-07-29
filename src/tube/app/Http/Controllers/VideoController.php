@@ -12,27 +12,50 @@ use App\Jobs\VideoThumbnail;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Database\Eloquent\Builder;
 use Inertia\Inertia;
+use Inertia\Support\Header;
 
 class VideoController extends Controller
 {
     private const PER_PAGE = 12;
 
     /**
+     * ?page=N から一括復元するときに許す最大ページ数。
+     * URL は誰でも書き換えられるため、無制限に取得させない上限を設ける。
+     */
+    private const MAX_RESTORE_PAGES = 50;
+
+    /**
      * 動画一覧を無限スクロール用の props 形状で返す。
      * simplePaginate は総件数 COUNT を発行しないため、hasMore だけ必要な用途に適する。
+     *
+     * 無限スクロールの追加読み込み（部分リロード）は要求された1ページだけを返し、
+     * クライアント側で Inertia::merge により追記される。
+     * それ以外（初回描画・リロード・履歴が失われた戻る操作）は ?page=N から
+     * 1〜N ページ目をまとめて返し、一覧が途中から始まってしまうのを防ぐ。
      */
-    private function paginatedVideos(Builder $query): array
+    private function paginatedVideos(Request $request, Builder $query): array
     {
+        $requestedPage = max(1, (int) $request->input('page', 1));
         // ページング順序はここに一元化する。created_at だけでは同秒の同順位で
         // ページ跨ぎの重複/欠落が起きるため、id を一意なタイブレークに加える。
-        $paginator = $query->latest()->orderBy('id', 'desc')->simplePaginate(self::PER_PAGE);
+        $query = $query->latest()->orderBy('id', 'desc');
+
+        if ($request->hasHeader(Header::PARTIAL_COMPONENT)) {
+            $paginator = $query->simplePaginate(self::PER_PAGE, ['*'], 'page', $requestedPage);
+            $nextPage = $requestedPage + 1;
+        } else {
+            $restorePages = min($requestedPage, self::MAX_RESTORE_PAGES);
+            // 1ページ目から restorePages 分をまとめて1クエリで取得する
+            $paginator = $query->simplePaginate($restorePages * self::PER_PAGE, ['*'], 'page', 1);
+            $nextPage = $restorePages + 1;
+        }
 
         return [
             // matchOn('id') でページ跨ぎの重複を id で解決する（オフセットずれでの重複カード防止）
             'videos' => Inertia::merge($paginator->items())->matchOn('id'),
             'pagination' => [
                 'hasMore' => $paginator->hasMorePages(),
-                'nextPage' => $paginator->currentPage() + 1,
+                'nextPage' => $nextPage,
             ],
         ];
     }
@@ -47,7 +70,7 @@ class VideoController extends Controller
             ->when(filled($search), fn($query) => $query->where('title', 'like', "%{$search}%"));
 
         return Inertia::render('index', [
-            ...$this->paginatedVideos($query),
+            ...$this->paginatedVideos($request, $query),
             'word' => $search,
         ]);
     }
@@ -68,7 +91,7 @@ class VideoController extends Controller
 
         return Inertia::render('video/show', [
             'video' => $video,
-            ...$this->paginatedVideos($query),
+            ...$this->paginatedVideos($request, $query),
         ]);
     }
 

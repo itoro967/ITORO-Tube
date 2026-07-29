@@ -9,6 +9,11 @@ const DEFAULT_ONLY = ['videos', 'pagination']
  * 追加読み込みする。WhenVisible の暗黙挙動に依存せず、自前の IntersectionObserver で
  * 「可視の間は連続読み込み」「失敗したら停止して再試行UIを出す」を明示制御する。
  *
+ * 読み込むたびに URL の ?page=N を更新する（履歴は replace なので増えない）。これにより
+ * 追加読み込み後の一覧が history state に保存され、動画から戻ったときに全件＋スクロール位置が
+ * 復元される。リロード等で history state が失われた場合はサーバー側が ?page=N から
+ * 1〜N ページ目をまとめて返して復元する。
+ *
  * 検索などで一覧が置き換わる場合は、呼び出し側で `key` を変えて本コンポーネントを再マウントし、
  * 内部状態（errored ページ等）をリセットすること。
  */
@@ -41,7 +46,11 @@ export function InfiniteScrollSentinel({ pagination, only = DEFAULT_ONLY }: { pa
     router.reload({
       only,
       data: { page: requestedPage },
-      preserveUrl: true,
+      // preserveUrl を付けると Inertia が history へ page を書き戻さなくなり
+      // (History.pushState/replaceState が preserveUrl で早期 return する)、
+      // 戻る操作で「1ページ目だけ」の状態に復元されてスクロール位置も失われる。
+      // replace で URL に ?page=N を反映しつつ、履歴エントリは1件のまま保つ。
+      replace: true,
       onSuccess: () => { succeeded = true },
       onFinish: () => {
         setLoading(false)

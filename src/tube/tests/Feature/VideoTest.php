@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Jobs\VideoEncoder;
 use App\Jobs\VideoThumbnail;
 use App\Models\User;
@@ -28,6 +29,81 @@ class VideoTest extends TestCase
                 ->has('videos', 1)
                 ->where('videos.0.id', $video->id)
         );
+    }
+
+    /**
+     * 再生可能な動画を n 件作り、一覧に並ぶ順（新しい順）の id を返す。
+     */
+    private function createPlayableVideos(User $user, int $count): array
+    {
+        for ($i = 1; $i <= $count; $i++) {
+            $user->videos()->create([
+                'title' => "video {$i}",
+                'video_path' => "videos/{$i}.mp4",
+                'thumbnail_path' => "thumbnails/{$i}.jpg",
+                'encoded' => Video::ENCODE_COMPLETE,
+            ]);
+        }
+
+        return Video::orderByDesc('created_at')->orderByDesc('id')->pluck('id')->all();
+    }
+
+    /**
+     * 無限スクロールの追加読み込み（部分リロード）が送るヘッダー。
+     */
+    private function partialReloadHeaders(string $component): array
+    {
+        return [
+            'X-Inertia' => 'true',
+            'X-Inertia-Version' => (new HandleInertiaRequests())->version(request()),
+            'X-Inertia-Partial-Component' => $component,
+            'X-Inertia-Partial-Data' => 'videos,pagination',
+        ];
+    }
+
+    public function test_index_partial_reload_returns_only_the_requested_page(): void
+    {
+        $user = User::factory()->create();
+        $ids = $this->createPlayableVideos($user, 30);
+
+        // 部分リロードは JSON で返るため assertInertia（ルートビュー前提）ではなく JSON で検証する
+        $this->get(route('dashboard', ['page' => 2]), $this->partialReloadHeaders('index'))
+            ->assertOk()
+            // 追加読み込みは要求されたページだけを返す（クライアント側で merge され追記される）
+            ->assertJsonCount(12, 'props.videos')
+            ->assertJsonPath('props.videos.0.id', $ids[12])
+            ->assertJsonPath('props.pagination.nextPage', 3)
+            ->assertJsonPath('props.pagination.hasMore', true);
+    }
+
+    public function test_index_restores_every_page_up_to_the_page_query(): void
+    {
+        $user = User::factory()->create();
+        $ids = $this->createPlayableVideos($user, 30);
+
+        // 履歴が失われた戻る操作やリロードで ?page=3 に直接来ても、1〜3ページ目をまとめて返す
+        $this->get(route('dashboard', ['page' => 3]))
+            ->assertOk()
+            ->assertInertia(
+                fn(Assert $page) => $page->has('videos', 30)
+                    ->where('videos.0.id', $ids[0])
+                    ->where('pagination.nextPage', 4)
+                    ->where('pagination.hasMore', false)
+            );
+    }
+
+    public function test_index_caps_the_number_of_restored_pages(): void
+    {
+        $user = User::factory()->create();
+        $this->createPlayableVideos($user, 3);
+
+        // ?page= は誰でも書き換えられるので、一括復元は上限(50ページ)で頭打ちにする
+        $this->get(route('dashboard', ['page' => 9999]))
+            ->assertOk()
+            ->assertInertia(
+                fn(Assert $page) => $page->has('videos', 3)
+                    ->where('pagination.nextPage', 51)
+            );
     }
 
     public function test_show_excludes_current_and_unencoded_from_related(): void
